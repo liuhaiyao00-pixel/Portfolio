@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>刘海瑶 | 资深UX/UI设计师 | AI与复杂业务</title>
+    
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 引入 Google Fonts: 仅保留 JetBrains Mono 用于代码感点缀，主字体使用系统默认以提升性能 -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- 引入 Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- 引入 GSAP 动画库 -->
+    <script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://unpkg.com/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: [
+                            '-apple-system', 
+                            'BlinkMacSystemFont', 
+                            '"Segoe UI"', 
+                            'Roboto', 
+                            '"PingFang SC"', 
+                            '"Microsoft YaHei"', 
+                            'sans-serif'
+                        ],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        tech: {
+                            bg: '#050505',
+                            card: '#111111',
+                            border: '#222222',
+                            accent: '#3b82f6', // 科技蓝
+                            glow: 'rgba(59, 130, 246, 0.5)'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* 基础与隐藏默认鼠标 */
+        body {
+            background-color: #050505;
+            color: #f3f4f6;
+            cursor: none;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        /* --- 自定义科技鼠标 --- */
+        #cursor-dot {
+            width: 6px;
+            height: 6px;
+            background-color: white;
+            border-radius: 50%;
+            position: fixed;
+            top: 0; left: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+        #cursor-outline {
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            position: fixed;
+            top: 0; left: 0;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, background-color 0.3s, border-color 0.3s;
+        }
+        body.hovering-link #cursor-dot {
+            width: 0; height: 0; opacity: 0;
+        }
+        body.hovering-link #cursor-outline {
+            width: 60px; height: 60px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(2px);
+        }
+
+        /* --- 滚动渐显与视差 --- */
+        .reveal {
+            opacity: 0;
+            /* 为爆点回弹做准备，初始缩小 */
+            transform: translateY(80px) scale(0.85);
+            /* 张力回弹动画 2秒 */
+            transition: all 2s cubic-bezier(0.34, 1.8, 0.64, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        .parallax-layer {
+            transition: transform 0.1s linear;
+        }
+
+        /* ==========================================
+            核心修改：去除擦除动效，保留渐变颜色
+            ========================================== */
+        .hero-title {
+            position: relative;
+            /* 稍微缩小最大字号，以完美适应较长的“Hi！我是刘海瑶”文本 */
+            font-size: clamp(3rem, 8vw, 6rem); 
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            
+            /* 改为纯白色 */
+            color: #ffffff;
+            
+            display: inline-block;
+            margin-bottom: 0; 
+            user-select: none;
+        }
+
+        /* --- 液态发光卡片悬停效果 --- */
+        .glass-card {
+            background: rgba(17, 17, 17, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            background: rgba(25, 25, 25, 0.8);
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.8), 0 0 20px -5px var(--tw-color-tech-glow);
+        }
+        .image-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(5,5,5,1) 0%, rgba(5,5,5,0) 50%);
+            pointer-events: none;
+        }
+
+        /* 极光网格背景 */
+        .bg-grid {
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+        }
+        
+        /* --- 英雄区专属动态弥散光晕 --- */
+        .hero-container {
+            position: relative;
+            overflow: hidden; /* 严格控制光晕不溢出到下方页面 */
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="antialiased font-sans selection:bg-blue-500 selection:text-white">
+
+    <!-- 自定义鼠标指针 -->
+    <div id="cursor-dot"></div>
+    <div id="cursor-outline"></div>
+
+    <!-- 背景环境光与网格 -->
+    <div class="fixed inset-0 z-[-2] bg-tech-bg"></div>
+    <div class="fixed inset-0 z-[-1] bg-grid opacity-30"></div>
+
+    <!-- 全局导航 (悬浮岛屿设计) -->
+    <nav class="fixed top-0 w-full z-50 p-4 md:p-6 transition-all duration-500 pointer-events-none">
+        <!-- 将 max-w-7xl 修改为 max-w-4xl，使导航栏整体变短更精致 -->
+        <div class="max-w-4xl mx-auto pointer-events-auto flex justify-between items-center bg-[#0d0d0d]/60 backdrop-blur-2xl border border-white/10 rounded-[2rem] px-3 py-3 md:px-4 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] hover:border-white/20 transition-all duration-500">
+            
+            <!-- 导航左侧：品牌铭牌 -->
+            <a href="#" onclick="navigate('home')" class="group interactive-element flex items-center gap-3 pl-2">
+                <!-- 头像展示 -->
+                <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 relative group-hover:border-tech-accent/50 transition-all duration-500 shadow-sm">
+                    <img src="https://i.postimg.cc/hv3MV2mY/tou-xiang.png" alt="刘海瑶" class="w-full h-full object-cover">
+                </div>
+                
+                <div class="hidden sm:flex flex-col justify-center">
+                    <span class="text-sm font-bold tracking-wider leading-tight text-gray-200 group-hover:text-white transition-colors duration-300">刘海瑶</span>
+                    <span class="text-[11px] font-medium text-gray-500 tracking-widest uppercase mt-0.5 group-hover:text-tech-accent transition-colors duration-300">产品交互设计师</span>
+                </div>
+            </a>
+
+            <!-- 导航中部：路由链接 -->
+            <div class="hidden md:flex items-center space-x-1 text-sm font-medium text-gray-400 absolute left-1/2 -translate-x-1/2">
+                <a href="#" onclick="navigate('home'); setTimeout(()=>document.getElementById('about').scrollIntoView({behavior:'smooth'}), 100)" class="px-5 py-2.5 rounded-full hover:bg-white/10 hover:text-white transition-all duration-300 interactive-element">个人优势</a>
+                <a href="#" onclick="navigate('home'); setTimeout(()=>document.getElementById('experience').scrollIntoView({behavior:'smooth'}), 100)" class="px-5 py-2.5 rounded-full hover:bg-white/10 hover:text-white transition-all duration-300 interactive-element">个人经历</a>
+                <a href="#" onclick="navigate('home'); setTimeout(()=>document.getElementById('work').scrollIntoView({behavior:'smooth'}), 100)" class="px-5 py-2.5 rounded-full hover:bg-white/10 hover:text-white transition-all duration-300 interactive-element">项目经历</a>
+            </div>
+
+            <!-- 导航右侧：联系按钮 -->
+            <div class="flex items-center gap-2 md:gap-3">
+                <a href="https://drive.google.com/file/d/1S-YGPxpbgU-dnvlraGf98iVkhSFdRQCu/view?usp=drive_link" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-4 md:px-5 py-2.5 bg-white/5 border border-white/10 text-gray-300 rounded-full font-medium hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-300 interactive-element text-sm hover:scale-105 active:scale-95">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">获取简历</span>
+                </a>
+                <a href="javascript:void(0)" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})" class="flex items-center gap-2 px-4 md:px-5 py-2.5 bg-white/5 border border-white/10 text-gray-300 rounded-full font-medium hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-300 interactive-element text-sm hover:scale-105 active:scale-95">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">联系我</span>
+                </a>
+            </div>
+            
+        </div>
+    </nav>
+
+    <!-- 动态视图容器 -->
+    <main id="app-container" class="min-h-screen">
+        <!-- 内容动态渲染区 -->
+    </main>
+
+    <!-- 精致布局联系模块与页脚 -->
+    <footer id="contact" class="relative mt-12 md:mt-16 pt-24 pb-24 bg-[#050505] border-t border-white/5 overflow-hidden">
+        <!-- 极微弱的背景光晕 -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[400px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+        <div class="max-w-6xl mx-auto px-6 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-8">
+                <!-- 左侧：文案与状态 -->
+                <div class="flex flex-col justify-center">
+                    <div class="flex items-center gap-3 mb-8">
+                        <span class="relative flex h-2 w-2">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span class="text-xs font-mono text-gray-500 tracking-[0.2em] uppercase">Available for work</span>
+                    </div>
+                    <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.1]">
+                        Let's create <br />
+                        <span class="text-gray-500">something great.</span>
+                    </h2>
+                </div>
+
+                <!-- 右侧：联系列表 -->
+                <div class="flex flex-col justify-center gap-4">
+                    <a href="mailto:1481649690@qq.com" class="group flex items-end justify-between border-b border-white/10 pb-6 interactive-element">
+                        <div>
+                            <p class="text-xs font-mono text-gray-500 uppercase tracking-widest mb-2">Email</p>
+                            <p class="text-xl md:text-2xl font-medium text-white group-hover:text-blue-400 transition-colors duration-300">1481649690@qq.com</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-blue-500/20 group-hover:border-blue-500/50 transition-all duration-500">
+                            <i data-lucide="arrow-up-right" class="w-5 h-5 text-gray-400 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300"></i>
+                        </div>
+                    </a>
+                    
+                    <a href="tel:18713230298" class="group flex items-end justify-between border-b border-white/10 pb-6 interactive-element mt-2">
+                        <div>
+                            <p class="text-xs font-mono text-gray-500 uppercase tracking-widest mb-2">Phone</p>
+                            <p class="text-xl md:text-2xl font-medium text-white group-hover:text-purple-400 transition-colors duration-300">187-1323-0298</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-purple-500/20 group-hover:border-purple-500/50 transition-all duration-500">
+                            <i data-lucide="arrow-up-right" class="w-5 h-5 text-gray-400 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 页面数据与逻辑 -->
+    <script>
+        const projectsData = {
+            'project-1': {
+                id: 'project-1',
+                title: '团队水印功能优化改版',
+                tags: ['移动端', 'B/C端', '设计主导'],
+                coverClass: 'bg-gradient-to-br from-blue-900 to-black',
+                coverImage: 'https://i.postimg.cc/J7pcVsGC/tuan-dui-shui-yin-feng-mian.png',
+                intro: '团队水印是今日水印app的核心功能，主要是【管理员】【员工】两类用户，管理员配置水印模板与设置要求，员工在使用中需按照设置的要求填写和拍照，并且数据表示用过此功能的用户留存相对较高，于是决定进一步提升此功能的使用量',
+                duty: '通过访谈用户及页面数据分析，团队水印在【价值感知弱、设置复杂、要求约束力弱】等关键体验阻碍，因此从【价值感知一设置成本一使用闭环】三个关键环节设计团队水印的全链路体验，并主导核心页面重构',
+                homeResults: [
+                    { val: '+18.09pp', label: '选择模板转化' },
+                    { val: '+30pp', label: '填写及拍照有效率' },
+                    { val: '+2w/天', label: '团队水印拍照用户' }
+                ],
+                timeline: '今日水印相机',
+                role: '设计主导',
+                impact: '用团队水印拍照用户+2w/天',
+                externalLink: 'https://drive.google.com/file/d/1zMehpw3qC3OWFMutAFOGd2CXvbDw4mzB/view',
+                context: '团队水印是今日水印app的核心功能，主要是【管理员】【员工】两类用户，管理员配置水印模板与设置要求，员工在使用中需按照设置的要求填写和拍照，并且数据表示用过此功能的用户留存相对较高，于是决定进一步提升此功能的使用量。',
+                challenge: '团队水印在【价值感知弱、设置复杂、要求约束力弱】等关键体验阻碍。',
+                strategy: '从【价值感知一设置成本一使用闭环】三个关键环节设计团队水印的全链路体验，并主导核心页面重构。',
+                execution: [
+                    { title: 'B端：模板化与轻量级配置', desc: '为了解决管理员不知道怎么设置的问题，优化入口触达并重构【选择/编辑模板】框架，大幅降低设置门槛。' },
+                    { title: 'C端：场景化渐进式约束', desc: '在员工拍照或填写表单前，以场景化组件进行防错提示，强化发现错误后的重拍链路。' }
+                ],
+                results: [
+                    { metric: '+18.09pp', label: '选择模板转化' },
+                    { metric: '+30pp', label: 'C端员工有效率' },
+                    { metric: '+2w/天', label: '新增拍照用户' }
+                ]
+            },
+            'project-2': {
+                id: 'project-2',
+                title: '员工【自助服务】功能优化',
+                tags: ['PC端', 'B端', 'UX实习生'],
+                coverClass: 'bg-gradient-to-br from-slate-800 to-black',
+                coverImage: 'https://i.postimg.cc/CxwRhg5v/di-di-xiang-mu-feng-mian.png',
+                intro: '【自助服务】承载滴滴员工外部服务(居住证、社保等)和员工内部服务(档案借阅、自助证明)，员工在找服务和申请服务时低效，需要频繁私聊HR了解想要申请的服务，希望优化设计，更高效的完成服务办理',
+                duty: '问卷调研发现员工使用过程中难点，设计走查&竞品分析总结痛点，通过缩短用户查找服务流程、用户使用动线优化页面框架、强化审核中的节点状态等，有效提升办理的使用满意度、操作性',
+                homeResults: [
+                    { val: '-6s', label: '找服务功能时间' },
+                    { val: '+14.73%', label: '用户易操作性评分' },
+                    { val: '+12.04%', label: '易理解性' }
+                ],
+                timeline: '2021.12 - 2022.06 | 滴滴出行',
+                role: 'UX 实习生',
+                impact: '整体满意度提升 10.39%',
+                externalLink: 'https://drive.google.com/file/d/1S3IkzThNloo8bmV5YR1kex2UnhA0IbxW/view?usp=drive_link',
+                context: '【自助服务】承载滴滴员工外部服务和内部服务，员工在找服务和申请服务时低效，需要频繁私聊HR了解想要申请的服务。',
+                challenge: '大量服务类目混杂导致员工“找服务低效”，且处理节点黑盒化，引发大量无意义的人工咨询。',
+                strategy: '通过缩短用户查找服务流程、用户使用动线优化页面框架、强化审核中的节点状态等，有效提升办理的使用满意度、操作性。',
+                execution: [
+                    { title: '服务分类与检索动线优化', desc: '通过卡片分类法梳理服务优先级，建立直观的导航及搜索系统。' },
+                    { title: '进度可视化设计', desc: '重构表单与审核流转状态，将补充材料等动作变为界面内的自闭环操作。' }
+                ],
+                results: [
+                    { metric: '-6s', label: '缩短服务寻径时间' },
+                    { metric: '+14.73%', label: '易操作性评分' },
+                    { metric: '+10.39%', label: '整体满意度' }
+                ]
+            },
+            'project-3': {
+                id: 'project-3',
+                title: 'AI编辑水印&汇报 0-1设计',
+                tags: ['移动端', 'B/C端', '主导语音智能输入'],
+                coverClass: 'bg-gradient-to-br from-indigo-900 to-black',
+                coverImage: 'https://i.postimg.cc/9FYGt1qv/ai-feng-mian.png',
+                intro: '自动拆分语音输入内容并填入相应的条目中，让操作直观简单，AI识别照片自动生成工作汇报，降低学习成本',
+                duty: '负责用户调研及竞品分析，找出设计机会点，让AI功能入口易触达，使用过程中能用懂，并同时和测试同学调试prompt，确保上线效果，跟进开发流程并设计走查，上线后通过数据验证设计方案和准确率，并阶段性的优化识别准确率',
+                homeResults: [
+                    { val: '4.23w', label: '点击入口用户数/天' },
+                    { val: '32.98%', label: '功能使用留存' },
+                    { val: '+22.59pp', label: '准确率' }
+                ],
+                timeline: '今日水印相机',
+                role: '产品设计师',
+                impact: '准确率提升 22.59pp',
+                externalLink: 'https://drive.google.com/file/d/1kFOVMIYmISKgltPhbAE8bc4FRXYyWR_d/view?usp=drive_link',
+                context: '自动拆分语音输入内容并填入相应的条目中，让操作直观简单，AI识别照片自动生成工作汇报，降低学习成本。',
+                challenge: '如何让并不熟悉 AI 的下沉用户发现并愿意尝试使用，并且控制大模型生成的可用性与准确度。',
+                strategy: '让AI功能入口易触达，使用过程中能用懂，并同时和测试同学调试prompt，确保上线效果。',
+                execution: [
+                    { title: '无缝顺滑的触达交互', desc: '在特定的长表单填写场景中温和透出入口，降低用户的理解成本。' },
+                    { title: '协同调试优化链路', desc: '跟进开发流程并设计走查，上线后通过数据验证设计方案和准确率，并阶段性的优化识别准确率。' }
+                ],
+                results: [
+                    { metric: '4.23w', label: '日均入口点击' },
+                    { metric: '32.98%', label: '功能留存' },
+                    { metric: '+22.59pp', label: '准确率提升' }
+                ]
+            },
+            'project-4': {
+                id: 'project-4',
+                title: '餐饮水印设计',
+                tags: ['0-1', 'UI'],
+                coverClass: 'bg-gradient-to-br from-teal-900 to-black',
+                coverImage: 'https://i.postimg.cc/vm8FZGJm/can-yin.png',
+                intro: '用户调研及数据分析，找出设计机会点及确定设计水印方案，跟进开发流程并设计走查，上线后通过数据验证设计方案',
+                duty: '1. 餐饮水印0-1设计<br>2. 应用商店封面设计<br>3. 弹窗&banner设计',
+                externalLink: 'https://drive.google.com/file/d/1yfBiqN_wrEeVCMZQSKWsFTRRkYY4_4Iu/view?usp=drive_link',
+                homeResults: [
+                    { val: '43.28%', label: '使用留存' },
+                    { val: '10w+', label: '使用人数' },
+                    { val: '5.167', label: '使用频次' }
+                ],
+                timeline: '多项目并行',
+                role: '视觉与体验设计',
+                impact: '保障了产品在垂直拓展上的视觉竞争力',
+                context: '支持了多条新业务线的0到1产品形态搭建，以及高转化的营销类视觉传达工作。',
+                challenge: '多线并行、排期紧凑，且需要保证风格统一和数据转化率。',
+                strategy: '搭建组件化思路快速推演，针对特定行业深度定制。',
+                execution: [
+                    { title: '餐饮水印0-1设计', desc: '主导并落地了契合餐饮行业特性的垂直类水印业务。' },
+                    { title: '视觉包装设计', desc: '完成应用商店封面设计及运营弹窗&banner设计。' }
+                ],
+                results: [
+                    { metric: '43.28%', label: '使用留存' },
+                    { metric: '10w+', label: '使用人数' },
+                    { metric: '5.167', label: '使用频次' }
+                ]
+            }
+        };
+
+        const views = {
+            home: `
+                <!-- 英雄区域 Hero Section -->
+                <section class="hero-container relative">
+
+                    <div class="max-w-6xl mx-auto px-6 pt-32 pb-24 text-left relative z-10 pointer-events-none">
+                        
+                        <!-- 极简渐变大标题，精准控制下间距 36px -->
+                        <div class="reveal mb-[36px] pointer-events-auto" style="transition-delay: 150ms;">
+                            <h1 class="hero-title interactive-element">刘海瑶</h1>
+                        </div>
+                        
+                        <!-- 副标题，精准控制下间距 24px -->
+                        <div class="reveal pointer-events-auto" style="transition-delay: 300ms;">
+                            <h2 class="text-2xl md:text-3xl font-bold tracking-tighter leading-tight mb-[24px] text-gray-400">
+                                具有3.5年经验的资深产品交互设计师
+                            </h2>
+                        </div>
+
+                        <div class="reveal pointer-events-auto" style="transition-delay: 450ms;">
+                            <p class="text-lg md:text-xl text-gray-500 leading-relaxed max-w-2xl mb-12 font-light">
+                                产品设计科班出身，主导过千万级DAU产品的全链路设计。具有产品思维，擅长以数据、用户调研驱动持续验证假设，不设边界，跳出框架。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 核心能力 -->
+                <section id="about" class="border-y border-white/5 bg-black/40 backdrop-blur-sm py-24 relative z-10">
+                    <div class="max-w-7xl mx-auto px-6">
+                        <div class="reveal mb-16">
+                            <h2 class="text-3xl md:text-5xl font-bold tracking-tight text-white">用户思维 × 产品思维 × 设计执行</h2>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                            
+                            <!-- Card 01 -->
+                            <div class="reveal group relative bg-[#0d0d0d]/80 backdrop-blur-2xl p-8 md:p-10 rounded-[2rem] flex flex-col border border-white/5 hover:border-blue-500/30 transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(59,130,246,0.15)] overflow-hidden min-h-[320px]">
+                                <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/10 rounded-full blur-[60px] group-hover:bg-blue-500/20 transition-all duration-700 pointer-events-none z-0"></div>
+                                <div class="flex justify-between items-start relative z-10 mb-8">
+                                    <div class="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-blue-500/50 group-hover:bg-blue-500/10 transition-all duration-500 shadow-lg group-hover:scale-110">
+                                        <i data-lucide="layers" class="w-6 h-6 text-gray-400 group-hover:text-blue-400 transition-colors duration-500"></i>
+                                    </div>
+                                </div>
+                                <div class="relative z-10 mt-auto">
+                                    <h3 class="text-xl md:text-2xl font-bold mb-4 text-white group-hover:text-blue-400 transition-colors duration-300">
+                                        全链路设计能力
+                                    </h3>
+                                    <div class="w-8 h-[2px] bg-white/10 mb-5 group-hover:bg-blue-500/50 group-hover:w-12 transition-all duration-500"></div>
+                                    <p class="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                                        产品设计科班出身，能独立完成产品设计与优化，主导过千万级用户B/C端产品的全链路设计，涵盖用户研究、数据分析、竞品分析、交互、视觉设计到开发落地全流程。
+                                    </p>
+                                </div>
+                                <div class="absolute bottom-6 right-6 w-3 h-3 border-b-2 border-r-2 border-blue-500/50 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0"></div>
+                            </div>
+
+                            <!-- Card 02 -->
+                            <div class="reveal group relative bg-[#0d0d0d]/80 backdrop-blur-2xl p-8 md:p-10 rounded-[2rem] flex flex-col border border-white/5 hover:border-emerald-500/30 transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(16,185,129,0.15)] overflow-hidden min-h-[320px]" style="transition-delay: 100ms;">
+                                <div class="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-[60px] group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none z-0"></div>
+                                <div class="flex justify-between items-start relative z-10 mb-8">
+                                    <div class="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-emerald-500/50 group-hover:bg-emerald-500/10 transition-all duration-500 shadow-lg group-hover:scale-110">
+                                        <i data-lucide="pie-chart" class="w-6 h-6 text-gray-400 group-hover:text-emerald-400 transition-colors duration-500"></i>
+                                    </div>
+                                </div>
+                                <div class="relative z-10 mt-auto">
+                                    <h3 class="text-xl md:text-2xl font-bold mb-4 text-white group-hover:text-emerald-400 transition-colors duration-300">
+                                        擅长数据分析
+                                    </h3>
+                                    <div class="w-8 h-[2px] bg-white/10 mb-5 group-hover:bg-emerald-500/50 group-hover:w-12 transition-all duration-500"></div>
+                                    <p class="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                                        在工作中能够接触到足够多的数据，主动收集并分析数据，通过用户行为数据分析和AB测试持续迭代产品关键页面。
+                                    </p>
+                                </div>
+                                <div class="absolute bottom-6 right-6 w-3 h-3 border-b-2 border-r-2 border-emerald-500/50 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0"></div>
+                            </div>
+
+                            <!-- Card 03 -->
+                            <div class="reveal group relative bg-[#0d0d0d]/80 backdrop-blur-2xl p-8 md:p-10 rounded-[2rem] flex flex-col border border-white/5 hover:border-purple-500/30 transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(168,85,247,0.15)] overflow-hidden min-h-[320px]" style="transition-delay: 200ms;">
+                                <div class="absolute -top-24 -right-24 w-64 h-64 bg-purple-500/10 rounded-full blur-[60px] group-hover:bg-purple-500/20 transition-all duration-700 pointer-events-none z-0"></div>
+                                <div class="flex justify-between items-start relative z-10 mb-8">
+                                    <div class="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-purple-500/50 group-hover:bg-purple-500/10 transition-all duration-500 shadow-lg group-hover:scale-110">
+                                        <i data-lucide="users" class="w-6 h-6 text-gray-400 group-hover:text-purple-400 transition-colors duration-500"></i>
+                                    </div>
+                                </div>
+                                <div class="relative z-10 mt-auto">
+                                    <h3 class="text-xl md:text-2xl font-bold mb-4 text-white group-hover:text-purple-400 transition-colors duration-300">
+                                        跨部门协作推动
+                                    </h3>
+                                    <div class="w-8 h-[2px] bg-white/10 mb-5 group-hover:bg-purple-500/50 group-hover:w-12 transition-all duration-500"></div>
+                                    <p class="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                                        与产品、研发团队深度协作完成40+个版本迭代，通过设计提案成功推动3次产品功能调整，平衡用户体验与业务目标，具备沟通与项目推动能力。
+                                    </p>
+                                </div>
+                                <div class="absolute bottom-6 right-6 w-3 h-3 border-b-2 border-r-2 border-purple-500/50 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0"></div>
+                            </div>
+
+                            <!-- Card 04 -->
+                            <div class="reveal group relative bg-[#0d0d0d]/80 backdrop-blur-2xl p-8 md:p-10 rounded-[2rem] flex flex-col border border-white/5 hover:border-orange-500/30 transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(249,115,22,0.15)] overflow-hidden min-h-[320px]">
+                                <div class="absolute -top-24 -right-24 w-64 h-64 bg-orange-500/10 rounded-full blur-[60px] group-hover:bg-orange-500/20 transition-all duration-700 pointer-events-none z-0"></div>
+                                <div class="flex justify-between items-start relative z-10 mb-8">
+                                    <div class="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-orange-500/50 group-hover:bg-orange-500/10 transition-all duration-500 shadow-lg group-hover:scale-110">
+                                        <i data-lucide="clock" class="w-6 h-6 text-gray-400 group-hover:text-orange-400 transition-colors duration-500"></i>
+                                    </div>
+                                </div>
+                                <div class="relative z-10 mt-auto">
+                                    <h3 class="text-xl md:text-2xl font-bold mb-4 text-white group-hover:text-orange-400 transition-colors duration-300">
+                                        较强的时间管理
+                                    </h3>
+                                    <div class="w-8 h-[2px] bg-white/10 mb-5 group-hover:bg-orange-500/50 group-hover:w-12 transition-all duration-500"></div>
+                                    <p class="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                                        在多项目并行的情况下，能够拆解设计任务与关键节点，合理安排优先级。
+                                    </p>
+                                </div>
+                                <div class="absolute bottom-6 right-6 w-3 h-3 border-b-2 border-r-2 border-orange-500/50 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0"></div>
+                            </div>
+
+                            <!-- Card 05 -->
+                            <div class="reveal group relative bg-[#0d0d0d]/80 backdrop-blur-2xl p-8 md:p-10 rounded-[2rem] flex flex-col border border-white/5 hover:border-teal-500/30 transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(20,184,166,0.15)] overflow-hidden min-h-[320px]" style="transition-delay: 100ms;">
+                                <div class="absolute -top-24 -right-24 w-64 h-64 bg-teal-500/10 rounded-full blur-[60px] group-hover:bg-teal-500/20 transition-all duration-700 pointer-events-none z-0"></div>
+                                <div class="flex justify-between items-start relative z-10 mb-8">
+                                    <div class="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-teal-500/50 group-hover:bg-teal-500/10 transition-all duration-500 shadow-lg group-hover:scale-110">
+                                        <i data-lucide="check-circle" class="w-6 h-6 text-gray-400 group-hover:text-teal-400 transition-colors duration-500"></i>
+                                    </div>
+                                </div>
+                                <div class="relative z-10 mt-auto">
+                                    <h3 class="text-xl md:text-2xl font-bold mb-4 text-white group-hover:text-teal-400 transition-colors duration-300">
+                                        流程跟进
+                                    </h3>
+                                    <div class="w-8 h-[2px] bg-white/10 mb-5 group-hover:bg-teal-500/50 group-hover:w-12 transition-all duration-500"></div>
+                                    <p class="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                                        持续跟进设计-评审-开发-上线各阶段，确保方案按期、高质量落地。
+                                    </p>
+                                </div>
+                                <div class="absolute bottom-6 right-6 w-3 h-3 border-b-2 border-r-2 border-teal-500/50 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0"></div>
+                            </div>
+
+                            <!-- Card 06 -->
+                            <div class="reveal group relative bg-[#0d0d0d]/80 backdrop-blur-2xl p-8 md:p-10 rounded-[2rem] flex flex-col border border-white/5 hover:border-rose-500/30 transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(244,63,94,0.15)] overflow-hidden min-h-[320px]" style="transition-delay: 200ms;">
+                                <div class="absolute -top-24 -right-24 w-64 h-64 bg-rose-500/10 rounded-full blur-[60px] group-hover:bg-rose-500/20 transition-all duration-700 pointer-events-none z-0"></div>
+                                <div class="flex justify-between items-start relative z-10 mb-8">
+                                    <div class="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-rose-500/50 group-hover:bg-rose-500/10 transition-all duration-500 shadow-lg group-hover:scale-110">
+                                        <i data-lucide="sparkles" class="w-6 h-6 text-gray-400 group-hover:text-rose-400 transition-colors duration-500"></i>
+                                    </div>
+                                </div>
+                                <div class="relative z-10 mt-auto">
+                                    <h3 class="text-xl md:text-2xl font-bold mb-4 text-white group-hover:text-rose-400 transition-colors duration-300">
+                                        好奇心与学习能力强
+                                    </h3>
+                                    <div class="w-8 h-[2px] bg-white/10 mb-5 group-hover:bg-rose-500/50 group-hover:w-12 transition-all duration-500"></div>
+                                    <p class="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                                        平时读书及设计文章的感想和经验会总结成设计经验文档，并用于到设计工作中。
+                                    </p>
+                                </div>
+                                <div class="absolute bottom-6 right-6 w-3 h-3 border-b-2 border-r-2 border-rose-500/50 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0"></div>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 个人经历 (Timeline) -->
+                <section id="experience" class="py-32 relative z-10">
+                    <div class="max-w-7xl mx-auto px-6">
+                        <div class="reveal mb-24 md:mb-32">
+                            <h2 class="text-3xl md:text-5xl font-bold tracking-tight text-white">个人经历</h2>
+                        </div>
+                        <div class="relative border-l-2 border-white/10 ml-4 md:ml-8 space-y-12">
+                            
+                            <!-- 经历1 -->
+                            <div class="reveal relative pl-8 md:pl-16 parallax-layer">
+                                <div class="absolute -left-[11px] top-12 w-5 h-5 rounded-full bg-tech-bg border-[4px] border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.8)] z-10 flex items-center justify-center"></div>
+                                
+                                <div class="glass-card rounded-3xl overflow-hidden interactive-element group flex flex-col border border-white/5 hover:border-blue-500/30 transition-all duration-500 hover:shadow-[0_10px_40px_-10px_rgba(59,130,246,0.2)]">
+                                    
+                                    <!-- 常驻头部 (始终可见) -->
+                                    <div class="p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden bg-gradient-to-r from-blue-900/10 to-transparent">
+                                        <div class="absolute -right-16 -top-16 w-48 h-48 bg-blue-500/10 rounded-full blur-[50px] group-hover:bg-blue-500/20 transition-all duration-700 group-hover:scale-125 pointer-events-none"></div>
+                                        <i data-lucide="camera" class="absolute right-4 top-1/2 -translate-y-1/2 w-32 h-32 text-blue-500/5 -rotate-12 group-hover:rotate-0 transition-transform duration-700 pointer-events-none"></i>
+                                        
+                                        <div class="flex items-center gap-5 relative z-10">
+                                            <div class="w-14 h-14 shrink-0 bg-blue-500/10 rounded-2xl flex items-center justify-center border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)] group-hover:-translate-y-1 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all duration-500">
+                                                <i data-lucide="camera" class="w-7 h-7 text-blue-400"></i>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-2xl font-bold text-white tracking-tight mb-1 group-hover:text-blue-400 transition-colors">今日水印相机</h3>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="relative z-10 self-start sm:self-center flex flex-wrap items-center gap-3 sm:gap-4">
+                                            <p class="text-blue-400/90 text-base font-medium tracking-wide">产品设计师</p>
+                                            <div class="inline-flex items-center px-3.5 py-1.5 bg-black/40 border border-white/10 rounded-lg text-sm text-gray-300 backdrop-blur-md shadow-inner">
+                                                <i data-lucide="calendar" class="w-4 h-4 mr-2 text-blue-500/70"></i> 2022.07 - 2025.09
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hover展开区域 -->
+                                    <div class="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-500 ease-out opacity-0 group-hover:opacity-100">
+                                        <div class="overflow-hidden">
+                                            <div class="p-6 md:p-8 pt-0 md:pt-0 border-t border-white/5 bg-white/[0.01]">
+                                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6 md:mt-8">
+                                                    <!-- 工作内容 -->
+                                                    <div class="group/item">
+                                                        <h4 class="text-gray-200 flex items-center gap-2 mb-4 font-semibold text-sm uppercase tracking-widest"><i data-lucide="terminal-square" class="w-4 h-4 text-blue-400"></i> 工作内容</h4>
+                                                        <p class="text-sm text-gray-400 leading-relaxed pl-6 border-l border-white/10 group-hover/item:border-blue-500/50 transition-colors duration-300">
+                                                            负责APP端、Web端、小程序端功能优化迭代。通过数据分析、访谈等方法深入了解蓝领建筑工人使用水印及团队工作场景需求；通过设计交互流程和界面布局等优化用户体验，及时追踪需求上线数据及用户反馈，验证设计假设。
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    <!-- 核心成果 -->
+                                                    <div class="group/item bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 p-5 rounded-2xl relative overflow-hidden transition-all duration-300 hover:from-blue-500/20">
+                                                        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500"></div>
+                                                        <h4 class="text-white flex items-center gap-2 mb-3 font-semibold text-sm uppercase tracking-widest"><i data-lucide="award" class="w-4 h-4 text-blue-400"></i> 核心成果</h4>
+                                                        <p class="text-sm text-gray-300 leading-relaxed pl-6">
+                                                            主导 15+ 个功能优化迭代，达成业务目标并大幅提升满意度，获评<span class="text-white font-semibold border-b border-blue-500/50 pb-0.5">最佳新人及项目OKR贡献奖</span>；独立设计新水印样式并<span class="text-white font-semibold border-b border-blue-500/50 pb-0.5">成功获得美术著作权</span>，上线1个月后带此水印拍照用户突破 10w+。
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+
+                            <!-- 经历2 -->
+                            <div class="reveal relative pl-8 md:pl-16 parallax-layer" style="transition-delay: 100ms;">
+                                <div class="absolute -left-[11px] top-12 w-5 h-5 rounded-full bg-tech-bg border-[4px] border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.8)] z-10 flex items-center justify-center"></div>
+                                
+                                <div class="glass-card rounded-3xl overflow-hidden interactive-element group flex flex-col border border-white/5 hover:border-orange-500/30 transition-all duration-500 hover:shadow-[0_10px_40px_-10px_rgba(249,115,22,0.2)]">
+                                    
+                                    <!-- 常驻头部 (始终可见) -->
+                                    <div class="p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden bg-gradient-to-r from-orange-900/10 to-transparent">
+                                        <div class="absolute -right-16 -top-16 w-48 h-48 bg-orange-500/10 rounded-full blur-[50px] group-hover:bg-orange-500/20 transition-all duration-700 group-hover:scale-125 pointer-events-none"></div>
+                                        <i data-lucide="car" class="absolute right-4 top-1/2 -translate-y-1/2 w-32 h-32 text-orange-500/5 -rotate-12 group-hover:rotate-0 transition-transform duration-700 pointer-events-none"></i>
+                                        
+                                        <div class="flex items-center gap-5 relative z-10">
+                                            <div class="w-14 h-14 shrink-0 bg-orange-500/10 rounded-2xl flex items-center justify-center border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.15)] group-hover:-translate-y-1 group-hover:shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all duration-500">
+                                                <i data-lucide="car" class="w-7 h-7 text-orange-400"></i>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-2xl font-bold text-white tracking-tight mb-1 group-hover:text-orange-400 transition-colors">滴滴出行</h3>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="relative z-10 self-start sm:self-center flex flex-wrap items-center gap-3 sm:gap-4">
+                                            <p class="text-orange-400/90 text-base font-medium tracking-wide">UX实习生 · 企业服务EHR</p>
+                                            <div class="inline-flex items-center px-3.5 py-1.5 bg-black/40 border border-white/10 rounded-lg text-sm text-gray-300 backdrop-blur-md shadow-inner">
+                                                <i data-lucide="calendar" class="w-4 h-4 mr-2 text-orange-500/70"></i> 2021.12 - 2022.06
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hover展开区域 -->
+                                    <div class="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-500 ease-out opacity-0 group-hover:opacity-100">
+                                        <div class="overflow-hidden">
+                                            <div class="p-6 md:p-8 pt-0 md:pt-0 border-t border-white/5 bg-white/[0.01]">
+                                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6 md:mt-8">
+                                                    <!-- 工作内容 -->
+                                                    <div class="group/item">
+                                                        <h4 class="text-gray-200 flex items-center gap-2 mb-4 font-semibold text-sm uppercase tracking-widest"><i data-lucide="terminal-square" class="w-4 h-4 text-orange-400"></i> 工作内容</h4>
+                                                        <p class="text-sm text-gray-400 leading-relaxed pl-6 border-l border-white/10 group-hover/item:border-orange-500/50 transition-colors duration-300">
+                                                            优化【员工申请服务】【员工人才库】【招聘】等业务。进行设计走查与竞品分析，明确设计目标，输出流程优化与页面结构重构方案；与开发紧密合作推动上线，并通过调研验证设计效果。
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    <!-- 核心成果 -->
+                                                    <div class="group/item bg-gradient-to-r from-orange-500/10 to-transparent border border-orange-500/20 p-5 rounded-2xl relative overflow-hidden transition-all duration-300 hover:from-orange-500/20">
+                                                        <div class="absolute left-0 top-0 w-1 h-full bg-orange-500"></div>
+                                                        <h4 class="text-white flex items-center gap-2 mb-3 font-semibold text-sm uppercase tracking-widest"><i data-lucide="award" class="w-4 h-4 text-orange-400"></i> 核心成果</h4>
+                                                        <p class="text-sm text-gray-300 leading-relaxed pl-6">
+                                                            实习期间完成 3+ 可上线、可验证的体验优化项目。问卷调研验证显示，用户功能使用满意度、操作性反馈<span class="text-white font-semibold border-b border-orange-500/50 pb-0.5">明显提升</span>，获得跨部门员工及HR的高度认可。
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- 经历3 -->
+                            <div class="reveal relative pl-8 md:pl-16 parallax-layer" style="transition-delay: 200ms;">
+                                <div class="absolute -left-[11px] top-12 w-5 h-5 rounded-full bg-tech-bg border-[4px] border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.8)] z-10 flex items-center justify-center"></div>
+                                
+                                <div class="glass-card rounded-3xl overflow-hidden interactive-element group flex flex-col border border-white/5 hover:border-purple-500/30 transition-all duration-500 hover:shadow-[0_10px_40px_-10px_rgba(168,85,247,0.2)]">
+                                    
+                                    <!-- 常驻头部 (始终可见) -->
+                                    <div class="p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden bg-gradient-to-r from-purple-900/10 to-transparent">
+                                        <div class="absolute -right-16 -top-16 w-48 h-48 bg-purple-500/10 rounded-full blur-[50px] group-hover:bg-purple-500/20 transition-all duration-700 group-hover:scale-125 pointer-events-none"></div>
+                                        <i data-lucide="graduation-cap" class="absolute right-4 top-1/2 -translate-y-1/2 w-32 h-32 text-purple-500/5 -rotate-12 group-hover:rotate-0 transition-transform duration-700 pointer-events-none"></i>
+                                        
+                                        <div class="flex items-center gap-5 relative z-10">
+                                            <div class="w-14 h-14 shrink-0 bg-purple-500/10 rounded-2xl flex items-center justify-center border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.15)] group-hover:-translate-y-1 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all duration-500">
+                                                <i data-lucide="graduation-cap" class="w-7 h-7 text-purple-400"></i>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-2xl font-bold text-white tracking-tight mb-1 group-hover:text-purple-400 transition-colors">天津科技大学</h3>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="relative z-10 self-start sm:self-center flex flex-wrap items-center gap-3 sm:gap-4">
+                                            <p class="text-purple-400/90 text-base font-medium tracking-wide">产品设计专业 / 本科</p>
+                                            <div class="inline-flex items-center px-3.5 py-1.5 bg-black/40 border border-white/10 rounded-lg text-sm text-gray-300 backdrop-blur-md shadow-inner">
+                                                <i data-lucide="calendar" class="w-4 h-4 mr-2 text-purple-500/70"></i> 2018.09 - 2022.06
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hover展开区域 -->
+                                    <div class="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-500 ease-out opacity-0 group-hover:opacity-100">
+                                        <div class="overflow-hidden">
+                                            <div class="p-6 md:p-8 pt-0 md:pt-0 border-t border-white/5 bg-white/[0.01]">
+                                                <div class="mt-6 md:mt-8">
+                                                    <h4 class="text-gray-200 flex items-center gap-2 mb-6 font-semibold text-sm uppercase tracking-widest"><i data-lucide="medal" class="w-4 h-4 text-purple-400"></i> 校园经历与荣誉</h4>
+                                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-400">
+                                                        <div class="flex items-start gap-3 bg-black/40 p-3.5 rounded-xl border border-white/5 group-hover:border-purple-500/30 group-hover:bg-purple-500/10 transition-all duration-300">
+                                                            <i data-lucide="check-circle-2" class="w-4 h-4 text-purple-500 mt-0.5 shrink-0"></i> 
+                                                            <span class="leading-snug text-gray-300">2019-2020 校级奖学金</span>
+                                                        </div>
+                                                        <div class="flex items-start gap-3 bg-black/40 p-3.5 rounded-xl border border-white/5 group-hover:border-purple-500/30 group-hover:bg-purple-500/10 transition-all duration-300">
+                                                            <i data-lucide="check-circle-2" class="w-4 h-4 text-purple-500 mt-0.5 shrink-0"></i> 
+                                                            <span class="leading-snug text-gray-300">“挑战杯”天津市大学生创业计划竞赛 银奖</span>
+                                                        </div>
+                                                        <div class="flex items-start gap-3 bg-black/40 p-3.5 rounded-xl border border-white/5 group-hover:border-purple-500/30 group-hover:bg-purple-500/10 transition-all duration-300">
+                                                            <i data-lucide="check-circle-2" class="w-4 h-4 text-purple-500 mt-0.5 shrink-0"></i> 
+                                                            <span class="leading-snug text-gray-300">“挑战杯”文化创意与服务咨询组 二等奖</span>
+                                                        </div>
+                                                        <div class="flex items-start gap-3 bg-black/40 p-3.5 rounded-xl border border-white/5 group-hover:border-purple-500/30 group-hover:bg-purple-500/10 transition-all duration-300">
+                                                            <i data-lucide="check-circle-2" class="w-4 h-4 text-purple-500 mt-0.5 shrink-0"></i> 
+                                                            <span class="leading-snug text-gray-300">“创青春”学生创业大赛 三等奖</span>
+                                                        </div>
+                                                        <div class="flex items-start gap-3 bg-black/40 p-3.5 rounded-xl border border-white/5 group-hover:border-purple-500/30 group-hover:bg-purple-500/10 transition-all duration-300">
+                                                            <i data-lucide="check-circle-2" class="w-4 h-4 text-purple-500 mt-0.5 shrink-0"></i> 
+                                                            <span class="leading-snug text-gray-300">第五届市大学生创客马拉松大赛 一等奖</span>
+                                                        </div>
+                                                        <div class="flex items-start gap-3 bg-black/40 p-3.5 rounded-xl border border-white/5 group-hover:border-purple-500/30 group-hover:bg-purple-500/10 transition-all duration-300">
+                                                            <i data-lucide="check-circle-2" class="w-4 h-4 text-purple-500 mt-0.5 shrink-0"></i> 
+                                                            <span class="leading-snug text-gray-300">团队路演选拔活动 校级一等奖</span>
+                                                        </div>
+                                                        <div class="flex items-start gap-3 bg-black/40 p-3.5 rounded-xl border border-white/5 group-hover:border-purple-500/30 group-hover:bg-purple-500/10 transition-all duration-300">
+                                                            <i data-lucide="users" class="w-4 h-4 text-gray-500 mt-0.5 shrink-0 group-hover:text-purple-400 transition-colors"></i> 
+                                                            <span class="leading-snug text-gray-300">歌舞青春社团秘书部部长</span>
+                                                        </div>
+                                                        <div class="flex items-start gap-3 bg-black/40 p-3.5 rounded-xl border border-white/5 group-hover:border-purple-500/30 group-hover:bg-purple-500/10 transition-all duration-300">
+                                                            <i data-lucide="users" class="w-4 h-4 text-gray-500 mt-0.5 shrink-0 group-hover:text-purple-400 transition-colors"></i> 
+                                                            <span class="leading-snug text-gray-300">班级学生干部</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 作品集列表 (2x2 高定便当盒排版) -->
+                <section id="work" class="pt-32 pb-16 md:pt-40 md:pb-20 relative z-10">
+                    <div class="max-w-7xl mx-auto px-6">
+                        <div class="flex items-center mb-16 md:mb-24 reveal">
+                            <div class="flex items-center gap-4">
+                                <h2 class="text-3xl md:text-5xl font-bold tracking-tight text-white">项目经历</h2>
+                            </div>
+                        </div>
+                        
+                        <!-- 卡片容器: 2x2 网格，增加悬停时的抽屉式交互 -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                            ${Object.values(projectsData).map((project, index) => {
+                                // [BugFix]：将原本未定义的 Maps() 修复为 navigate()
+                                const clickAction = project.externalLink ? `window.open('${project.externalLink}', '_blank')` : `Maps('project', '${project.id}')`;
+                                const actionText = '查看';
+                                return `
+                                <div onclick="${clickAction}" class="group relative bg-[#0d0d0d]/90 backdrop-blur-3xl rounded-[2.5rem] flex flex-col border border-white/5 hover:border-tech-accent/40 transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_40px_80px_-20px_rgba(59,130,246,0.15)] cursor-pointer interactive-element overflow-hidden reveal">
+
+                                    <!-- 顶部：全宽大尺寸图片占位 -->
+                                    <div class="w-full aspect-[16/10] md:aspect-video ${project.coverClass} relative overflow-hidden flex items-center justify-center border-b border-white/5 group-hover:border-tech-accent/20 transition-colors duration-500">
+                                        ${project.coverImage ? 
+                                            `<img src="${project.coverImage}" alt="${project.title}" class="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 z-0">` 
+                                            : 
+                                            `<div class="absolute inset-0 bg-grid opacity-30 mix-blend-overlay z-10 pointer-events-none"></div>
+                                             <i data-lucide="layers" class="w-12 h-12 md:w-16 md:h-16 text-white/30 group-hover:text-white group-hover:scale-125 transition-all duration-700 relative z-20"></i>`
+                                        }
+                                        
+                                        <!-- 背景滤镜与网格 -->
+                                        <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-700 z-10 pointer-events-none"></div>
+                                        
+                                        <!-- 右上角悬浮超大序号 -->
+                                        <span class="absolute top-6 right-8 text-5xl md:text-7xl font-black text-white/5 group-hover:text-white/20 transition-colors duration-500 font-sans tracking-tighter leading-none z-20 pointer-events-none">
+                                            0${index + 1}
+                                        </span>
+                                    </div>
+
+                                    <!-- 底部：内容区域 -->
+                                    <div class="p-8 md:p-10 flex flex-col flex-1 relative z-10 bg-gradient-to-b from-transparent to-black/50">
+                                        <div class="flex items-start justify-between mb-5 gap-4">
+                                            <!-- 业务标签 -->
+                                            <div class="flex flex-wrap gap-2">
+                                                ${project.tags.map(tag => `
+                                                    <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300 uppercase tracking-widest backdrop-blur-md group-hover:bg-tech-accent/10 group-hover:text-tech-accent group-hover:border-tech-accent/30 transition-colors duration-500 whitespace-nowrap">
+                                                        ${tag}
+                                                    </span>
+                                                `).join('')}
+                                            </div>
+                                            
+                                            <!-- 显性跳转按钮 (始终可见，Hover强化互动感) -->
+                                            <div class="flex items-center gap-2 text-gray-400 group-hover:text-tech-accent transition-all duration-300 mt-0.5 shrink-0">
+                                                <span class="text-sm font-medium tracking-widest opacity-80 group-hover:opacity-100 group-hover:-translate-x-1 transition-all duration-300">${actionText}</span>
+                                                <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20 group-hover:bg-tech-accent group-hover:border-tech-accent group-hover:text-white transition-all duration-300 backdrop-blur-sm shadow-sm">
+                                                    <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <h3 class="text-2xl md:text-3xl font-bold text-white tracking-tight group-hover:text-tech-accent transition-colors duration-300">
+                                            ${project.title}
+                                        </h3>
+                                        
+                                        <!-- 动态抽屉：功能介绍 (默认隐藏，Hover展开) -->
+                                        <div class="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-500 ease-out opacity-0 group-hover:opacity-100">
+                                            <div class="overflow-hidden">
+                                                <div class="pt-5 pb-2">
+                                                    <div class="border-l-2 border-tech-accent/40 pl-4">
+                                                        <p class="text-gray-400 text-sm md:text-base leading-relaxed font-light">
+                                                            ${project.intro}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 数据指标 -->
+                                        <div class="mt-auto pt-8 border-t border-white/5 group-hover:border-tech-accent/20 transition-colors duration-500">
+                                            <div class="flex flex-wrap gap-x-6 md:gap-x-8 gap-y-5">
+                                                ${project.homeResults.map(res => `
+                                                    <div class="flex flex-col">
+                                                        <span class="text-xl md:text-2xl font-bold text-gray-200 group-hover:text-white tracking-tight transition-colors duration-300">${res.val}</span>
+                                                        <span class="text-sm md:text-sm text-gray-500 uppercase tracking-widest mt-1">${res.label}</span>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </section>
+            `,
+            project: (data) => `
+                <div class="max-w-4xl mx-auto px-6 pt-12 pb-8 reveal relative z-10">
+                    <button onclick="navigate('home')" class="inline-flex items-center text-gray-500 hover:text-white transition font-medium interactive-element">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> 返回首页序列
+                    </button>
+                </div>
+
+                <header class="max-w-4xl mx-auto px-6 pb-16 reveal relative z-10">
+                    <p class="font-mono text-xs text-tech-accent mb-4 tracking-widest uppercase">${data.tags.join(' | ')}</p>
+                    <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-10 leading-tight text-white">${data.title}</h1>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 py-8 border-y border-white/10 bg-black/20 rounded-xl px-8 glass-card">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase mb-2 font-mono">时间框架</p>
+                            <p class="font-medium text-sm text-gray-300">${data.timeline}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase mb-2 font-mono">担当角色</p>
+                            <p class="font-medium text-sm text-gray-300">${data.role}</p>
+                        </div>
+                        <div class="col-span-2">
+                            <p class="text-xs text-gray-500 uppercase mb-2 font-mono">商业/用户影响</p>
+                            <p class="font-medium text-sm text-tech-accent">${data.impact}</p>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="max-w-6xl mx-auto px-6 mb-24 reveal relative z-10">
+                    <div class="w-full aspect-[21/9] ${data.coverClass} rounded-3xl flex items-center justify-center border border-white/10 relative overflow-hidden group">
+                        ${data.coverImage ? 
+                            `<img src="${data.coverImage}" alt="${data.title}" class="absolute inset-0 w-full h-full object-cover">` 
+                            : 
+                            `<div class="absolute inset-0 bg-grid opacity-20"></div>
+                             <p class="text-white/30 text-xl font-mono tracking-widest relative z-10 group-hover:scale-110 transition-transform duration-700">HIGH-RES MOCKUP AREA</p>`
+                        }
+                        <div class="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none"></div>
+                    </div>
+                </div>
+
+                <article class="max-w-3xl mx-auto px-6 space-y-24 text-base md:text-lg text-gray-300 leading-relaxed relative z-10 font-light">
+                    <section class="reveal">
+                        <h2 class="text-2xl font-bold mb-8 flex items-center text-white"><i data-lucide="target" class="w-6 h-6 mr-3 text-tech-accent"></i> 背景与挑战 (Context & Challenge)</h2>
+                        <div class="space-y-8">
+                            <p>${data.context}</p>
+                            <div class="bg-red-900/10 border border-red-500/20 p-8 rounded-2xl">
+                                <p class="font-mono text-red-400 mb-4 text-sm uppercase flex items-center"><i data-lucide="alert-triangle" class="w-4 h-4 mr-2"></i> 核心阻碍与痛点</p>
+                                <p class="text-base leading-loose">${data.challenge}</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="reveal">
+                        <h2 class="text-2xl font-bold mb-8 flex items-center text-white"><i data-lucide="lightbulb" class="w-6 h-6 mr-3 text-tech-accent"></i> 设计策略 (Strategy)</h2>
+                        <div class="border-l-4 border-tech-accent pl-6 py-2">
+                            <p class="text-gray-300 italic">"${data.strategy}"</p>
+                        </div>
+                    </section>
+
+                    <section class="reveal">
+                        <h2 class="text-2xl font-bold mb-10 flex items-center text-white"><i data-lucide="cpu" class="w-6 h-6 mr-3 text-tech-accent"></i> 核心执行 (Execution)</h2>
+                        <div class="space-y-16">
+                            ${data.execution.map((item, idx) => `
+                                <div class="relative">
+                                    <div class="absolute -left-12 top-1 font-mono text-gray-700 text-xl font-bold">0${idx+1}</div>
+                                    <h3 class="text-xl font-semibold mb-4 text-white">${item.title}</h3>
+                                    <p class="text-gray-400 mb-8 text-base">${item.desc}</p>
+                                    
+                                    <div class="w-full aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-xs font-mono text-gray-600 glass-card interactive-element">
+                                        [ INTERACTIVE PROTOTYPE / WIREFRAME ]
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+
+                    <section class="reveal pb-24 border-b border-white/10">
+                        <h2 class="text-2xl font-bold mb-10 flex items-center text-white"><i data-lucide="bar-chart-2" class="w-6 h-6 mr-3 text-tech-accent"></i> 成果验证 (Results)</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            ${data.results.map(res => `
+                                <div class="glass-card p-8 rounded-2xl text-center border-t-2 border-t-tech-accent/50 interactive-element">
+                                    <p class="text-4xl font-bold text-white mb-3 tracking-tighter">${res.metric}</p>
+                                    <p class="text-xs text-gray-400 font-mono uppercase">${res.label}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+
+                    <div class="py-12 flex justify-center reveal">
+                         <button onclick="navigate('home'); setTimeout(()=>document.getElementById('work').scrollIntoView({behavior:'smooth'}), 100)" class="px-8 py-4 border border-white/20 text-white rounded-full font-medium hover:bg-white hover:text-black transition interactive-element flex items-center gap-2">
+                            <i data-lucide="grid" class="w-4 h-4"></i> 查看所有核心项目
+                        </button>
+                    </div>
+                </article>
+            `
+        };
+
+        // --- 路由、开场动画与核心逻辑 ---
+        const appContainer = document.getElementById('app-container');
+        let isFirstLoad = true;
+
+        // 用于清理LightRays WebGL以防内存泄漏
+        let lightRaysCleanup = null;
+
+        function render(html) {
+            appContainer.innerHTML = html;
+            lucide.createIcons();
+            initInteractiveElements();
+            initLightRays(); // 初始化 Light Rays WebGL 背景
+            window.scrollTo(0, 0);
+        }
+
+        // ==========================================
+        // ===== 路由与页面跳转逻辑 ===================
+        // ==========================================
+        function navigate(viewName, projectId = null) {
+            if (isFirstLoad) {
+                isFirstLoad = false;
+                render(views.home);
+                try { history.pushState({ view: 'home' }, '', '#home'); } catch(e) {}
+                runIntroAnimation();
+                return;
+            }
+
+            if (viewName === 'home') {
+                render(views.home);
+                try { history.pushState({ view: 'home' }, '', '#home'); } catch(e) {}
+                initRevealAnimation();
+            } else if (viewName === 'project' && projectId) {
+                const data = projectsData[projectId];
+                if (data) {
+                    render(views.project(data));
+                    try { history.pushState({ view: 'project', id: projectId }, '', `#${projectId}`); } catch(e) {}
+                    initRevealAnimation();
+                }
+            }
+        }
+
+        // ==========================================
+        // ===== 核心开场动画逻辑 (GSAP Timeline) =====
+        // ==========================================
+        function runIntroAnimation() {
+            const vh = window.innerHeight;
+            const heroElements = document.querySelectorAll('#app-container .reveal');
+            
+            // 仅保留首屏元素的平滑错位浮现效果，去掉加载遮罩层
+            heroElements.forEach((el, i) => {
+                if(el.getBoundingClientRect().top < vh) { 
+                    gsap.to(el, {
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
+                        duration: 1.5,
+                        delay: i * 0.15,
+                        ease: "power3.out"
+                    });
+                    // 防止被滚动监听重复触发
+                    el.classList.add('active');
+                }
+            });
+
+            // 稍微延迟后初始化常规的滚动监听动画
+            setTimeout(initRevealAnimation, 100);
+        }
+
+        // ==========================================
+        // --- 常规滚动侦听动画 ---
+        // ==========================================
+        function initRevealAnimation() {
+            const reveals = document.querySelectorAll('.reveal');
+            reveals.forEach((reveal) => {
+                const elementTop = reveal.getBoundingClientRect().top;
+                if (elementTop < window.innerHeight - 100) {
+                    reveal.classList.add('active');
+                }
+            });
+            
+            const onScroll = () => {
+                reveals.forEach((reveal) => {
+                    const elementTop = reveal.getBoundingClientRect().top;
+                    if (elementTop < window.innerHeight - 100) {
+                        reveal.style.opacity = '1';
+                        reveal.style.transform = 'translateY(0) scale(1)';
+                    }
+                });
+
+                const parallaxLayers = document.querySelectorAll('.parallax-layer');
+                parallaxLayers.forEach((layer, index) => {
+                    const speed = 0.03 * (index + 1);
+                    const yPos = -(window.scrollY * speed);
+                    layer.style.transform = `translateY(${yPos}px)`;
+                });
+            };
+
+            window.addEventListener('scroll', onScroll, { passive: true });
+            setTimeout(onScroll, 100);
+        }
+
+        // ==========================================
+        // ===== Light Rays WebGL 背景动画逻辑 ========
+        // ==========================================
+        async function initLightRays() {
+            const container = document.querySelector('.hero-container');
+            if (!container) return;
+
+            // 清理上一个实例
+            if (lightRaysCleanup) {
+                lightRaysCleanup();
+                lightRaysCleanup = null;
+            }
+
+            try {
+                // 动态拉取您提供的 ogl 核心组件
+                const { Renderer, Program, Triangle, Mesh } = await import('https://esm.sh/ogl');
+
+                const renderer = new Renderer({
+                    dpr: Math.min(window.devicePixelRatio, 2),
+                    alpha: true
+                });
+                
+                const gl = renderer.gl;
+                gl.canvas.style.position = 'absolute';
+                gl.canvas.style.top = '0';
+                gl.canvas.style.left = '0';
+                gl.canvas.style.width = '100%';
+                gl.canvas.style.height = '100%';
+                gl.canvas.style.pointerEvents = 'none'; // 确保鼠标事件穿透
+                gl.canvas.style.zIndex = '0'; // 将光芒置于背景
+                
+                container.insertBefore(gl.canvas, container.firstChild);
+
+                const hexToRgb = hex => {
+                    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                    return m ? [parseInt(m[1], 16) / 255, parseInt(m[2], 16) / 255, parseInt(m[3], 16) / 255] : [1, 1, 1];
+                };
+
+                const getAnchorAndDir = (origin, w, h) => {
+                    const outside = 0.2;
+                    switch (origin) {
+                        case 'top-left': return { anchor: [0, -outside * h], dir: [0, 1] };
+                        case 'top-right': return { anchor: [w, -outside * h], dir: [0, 1] };
+                        case 'left': return { anchor: [-outside * w, 0.5 * h], dir: [1, 0] };
+                        case 'right': return { anchor: [(1 + outside) * w, 0.5 * h], dir: [-1, 0] };
+                        case 'bottom-left': return { anchor: [0, (1 + outside) * h], dir: [0, -1] };
+                        case 'bottom-center': return { anchor: [0.5 * w, (1 + outside) * h], dir: [0, -1] };
+                        case 'bottom-right': return { anchor: [w, (1 + outside) * h], dir: [0, -1] };
+                        default: return { anchor: [0.5 * w, -outside * h], dir: [0, 1] };
+                    }
+                };
+
+                // User settings based on props provided in prompt
+                const raysOrigin = 'top-center';
+                const raysColor = '#ffffff';
+                const raysSpeed = 1;
+                const lightSpread = 0.5;
+                const rayLength = 3;
+                const pulsating = false;
+                const fadeDistance = 1.0;
+                const saturation = 1.0;
+                const followMouse = true;
+                const mouseInfluence = 0.1;
+                const noiseAmount = 0.0;
+                const distortion = 0.0;
+
+                const uniforms = {
+                    iTime: { value: 0 },
+                    iResolution: { value: [1, 1] },
+                    rayPos: { value: [0, 0] },
+                    rayDir: { value: [0, 1] },
+                    raysColor: { value: hexToRgb(raysColor) },
+                    raysSpeed: { value: raysSpeed },
+                    lightSpread: { value: lightSpread },
+                    rayLength: { value: rayLength },
+                    pulsating: { value: pulsating ? 1.0 : 0.0 },
+                    fadeDistance: { value: fadeDistance },
+                    saturation: { value: saturation },
+                    mousePos: { value: [0.5, 0.5] },
+                    mouseInfluence: { value: mouseInfluence },
+                    noiseAmount: { value: noiseAmount },
+                    distortion: { value: distortion }
+                };
+
+                const vert = `
+                    attribute vec2 position;
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = position * 0.5 + 0.5;
+                        gl_Position = vec4(position, 0.0, 1.0);
+                    }
+                `;
+
+                const frag = `
+                    precision highp float;
+                    uniform float iTime;
+                    uniform vec2  iResolution;
+                    uniform vec2  rayPos;
+                    uniform vec2  rayDir;
+                    uniform vec3  raysColor;
+                    uniform float raysSpeed;
+                    uniform float lightSpread;
+                    uniform float rayLength;
+                    uniform float pulsating;
+                    uniform float fadeDistance;
+                    uniform float saturation;
+                    uniform vec2  mousePos;
+                    uniform float mouseInfluence;
+                    uniform float noiseAmount;
+                    uniform float distortion;
+                    varying vec2 vUv;
+                    
+                    float noise(vec2 st) {
+                        return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+                    }
+                    
+                    float rayStrength(vec2 raySource, vec2 rayRefDirection, vec2 coord, float seedA, float seedB, float speed) {
+                        vec2 sourceToCoord = coord - raySource;
+                        vec2 dirNorm = normalize(sourceToCoord);
+                        float cosAngle = dot(dirNorm, rayRefDirection);
+                        float distortedAngle = cosAngle + distortion * sin(iTime * 2.0 + length(sourceToCoord) * 0.01) * 0.2;   
+                        float spreadFactor = pow(max(distortedAngle, 0.0), 1.0 / max(lightSpread, 0.001));
+                        float distance = length(sourceToCoord);
+                        float maxDistance = iResolution.x * rayLength;
+                        float lengthFalloff = clamp((maxDistance - distance) / maxDistance, 0.0, 1.0);    
+                        float fadeFalloff = clamp((iResolution.x * fadeDistance - distance) / (iResolution.x * fadeDistance), 0.5, 1.0);
+                        float pulse = pulsating > 0.5 ? (0.8 + 0.2 * sin(iTime * speed * 3.0)) : 1.0;
+                        float baseStrength = clamp(
+                            (0.45 + 0.15 * sin(distortedAngle * seedA + iTime * speed)) +
+                            (0.3 + 0.2 * cos(-distortedAngle * seedB + iTime * speed)),
+                            0.0, 1.0
+                        );
+                        return baseStrength * lengthFalloff * fadeFalloff * spreadFactor * pulse;
+                    }
+                    
+                    void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+                        vec2 coord = vec2(fragCoord.x, iResolution.y - fragCoord.y);    
+                        vec2 finalRayDir = rayDir;
+                        
+                        if (mouseInfluence > 0.0) {
+                            vec2 mouseScreenPos = mousePos * iResolution.xy;
+                            vec2 mouseDirection = normalize(mouseScreenPos - rayPos);
+                            finalRayDir = normalize(mix(rayDir, mouseDirection, mouseInfluence));
+                        }
+                        
+                        vec4 rays1 = vec4(1.0) * rayStrength(rayPos, finalRayDir, coord, 36.2214, 21.11349, 1.5 * raysSpeed);
+                        vec4 rays2 = vec4(1.0) * rayStrength(rayPos, finalRayDir, coord, 22.3991, 18.0234, 1.1 * raysSpeed);
+                        fragColor = rays1 * 0.5 + rays2 * 0.4;
+                        
+                        if (noiseAmount > 0.0) {
+                            float n = noise(coord * 0.01 + iTime * 0.1);
+                            fragColor.rgb *= (1.0 - noiseAmount + noiseAmount * n);
+                        }
+                        
+                        float brightness = 1.0 - (coord.y / iResolution.y);
+                        fragColor.x *= 0.1 + brightness * 0.8;
+                        fragColor.y *= 0.3 + brightness * 0.6;
+                        fragColor.z *= 0.5 + brightness * 0.5;
+                        
+                        if (saturation != 1.0) {
+                            float gray = dot(fragColor.rgb, vec3(0.299, 0.587, 0.114));
+                            fragColor.rgb = mix(vec3(gray), fragColor.rgb, saturation);
+                        }
+                        fragColor.rgb *= raysColor;
+                    }
+                    
+                    void main() {
+                        vec4 color;
+                        mainImage(color, gl_FragCoord.xy);
+                        gl_FragColor  = color;
+                    }
+                `;
+
+                const geometry = new Triangle(gl);
+                const program = new Program(gl, { vertex: vert, fragment: frag, uniforms });
+                const mesh = new Mesh(gl, { geometry, program });
+
+                let animationId;
+                const targetMouse = { x: 0.5, y: 0.5 };
+                const smoothMouse = { x: 0.5, y: 0.5 };
+
+                const updatePlacement = () => {
+                    if (!container) return;
+                    const wCSS = container.clientWidth;
+                    const hCSS = container.clientHeight;
+                    renderer.setSize(wCSS, hCSS);
+                    const w = wCSS * renderer.dpr;
+                    const h = hCSS * renderer.dpr;
+                    uniforms.iResolution.value = [w, h];
+                    const { anchor, dir } = getAnchorAndDir(raysOrigin, w, h);
+                    uniforms.rayPos.value = anchor;
+                    uniforms.rayDir.value = dir;
+                };
+
+                const handleMouseMove = e => {
+                    const rect = container.getBoundingClientRect();
+                    targetMouse.x = (e.clientX - rect.left) / rect.width;
+                    targetMouse.y = (e.clientY - rect.top) / rect.height;
+                };
+
+                if (followMouse) {
+                    window.addEventListener('mousemove', handleMouseMove);
+                }
+                
+                window.addEventListener('resize', updatePlacement);
+                updatePlacement();
+
+                const loop = t => {
+                    uniforms.iTime.value = t * 0.001;
+                    if (followMouse && mouseInfluence > 0.0) {
+                        const smoothing = 0.92;
+                        smoothMouse.x = smoothMouse.x * smoothing + targetMouse.x * (1 - smoothing);
+                        smoothMouse.y = smoothMouse.y * smoothing + targetMouse.y * (1 - smoothing);
+                        uniforms.mousePos.value = [smoothMouse.x, smoothMouse.y];
+                    }
+                    renderer.render({ scene: mesh });
+                    animationId = requestAnimationFrame(loop);
+                };
+                
+                animationId = requestAnimationFrame(loop);
+
+                // 绑定销毁逻辑以备调用
+                lightRaysCleanup = () => {
+                    cancelAnimationFrame(animationId);
+                    window.removeEventListener('resize', updatePlacement);
+                    window.removeEventListener('mousemove', handleMouseMove);
+                    if (renderer && renderer.gl) {
+                        const loseContextExt = renderer.gl.getExtension('WEBGL_lose_context');
+                        if (loseContextExt) loseContextExt.loseContext();
+                        if (gl.canvas && gl.canvas.parentNode) {
+                            gl.canvas.parentNode.removeChild(gl.canvas);
+                        }
+                    }
+                };
+
+            } catch (error) {
+                console.warn('Light Rays WebGL 动画初始化失败:', error);
+            }
+        }
+
+        // --- 自定义科技感光标系统 ---
+        const cursorDot = document.getElementById('cursor-dot');
+        const cursorOutline = document.getElementById('cursor-outline');
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let outlineX = mouseX;
+        let outlineY = mouseY;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursorDot.style.left = `${mouseX}px`;
+            cursorDot.style.top = `${mouseY}px`;
+        });
+
+        function animateCursor() {
+            const easing = 0.15;
+            outlineX += (mouseX - outlineX) * easing;
+            outlineY += (mouseY - outlineY) * easing;
+            cursorOutline.style.left = `${outlineX}px`;
+            cursorOutline.style.top = `${outlineY}px`;
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        function initInteractiveElements() {
+            const interactives = document.querySelectorAll('.interactive-element, a, button, .hero-title');
+            interactives.forEach(el => {
+                el.addEventListener('mouseenter', () => document.body.classList.add('hovering-link'));
+                el.addEventListener('mouseleave', () => document.body.classList.remove('hovering-link'));
+            });
+        }
+
+        // 浏览器历史接管
+        window.addEventListener('popstate', (e) => {
+            if (e.state && e.state.view === 'project') {
+                navigate('project', e.state.id);
+            } else {
+                navigate('home');
+            }
+        });
+
+        // 启动应用
+        window.onload = () => {
+            gsap.registerPlugin(ScrollTrigger);
+            const hash = window.location.hash.substring(1);
+            if (hash && projectsData[hash]) {
+                navigate('project', hash);
+            } else {
+                navigate('home');
+            }
+        };
+
+    </script>
+</body>
+</html>
